@@ -5,6 +5,8 @@ on:
     branches:
       - main
   pull_request:
+    branches:
+      - main
 
 jobs:
   check:
@@ -23,3 +25,4 @@ jobs:
       - name: Test with pytest
         run: |
           pytest
+
