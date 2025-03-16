@@ -58,8 +58,6 @@ debug_print "INFER_ARGS = $INFER_ARGS"
 debug_print "WS_BASE = $WS_BASE"
 debug_print "WS_INFER = $WS_INFER"
 
-num_proc=$(nproc)
-
 if [ -z "$files_to_check" ]; then
     echo "No files to check"
 
@@ -68,7 +66,7 @@ else
         dir_name=$(echo "$ffdir" | tr '/' '_')
 
         debug_print "Running flawfinder $FLAWFINDER_ARGS for files in /$GITHUB_WORKSPACE/$ffdir..."
-        eval flawfinder $FLAWFINDER_ARGS /$GITHUB_WORKSPACE/$ffdir >>flawfinder_$dir_name.txt 2>&1 || true
+        eval flawfinder "$FLAWFINDER_ARGS" "/$GITHUB_WORKSPACE/$ffdir" >>"flawfinder_$dir_name.txt" 2>&1 || true
     done
 
     cat flawfinder_*.txt > flawfinder.txt
@@ -90,7 +88,7 @@ else
         cat cppcheck_*.txt > cppcheck.txt
 
         debug_print "Running infer run --no-progress-bar --compilation-database compile_commands.json $INFER_ARGS..."
-        eval infer run --no-progress-bar --compilation-database compile_commands.json $INFER_ARGS || true
+        eval infer run --no-progress-bar --compilation-database compile_commands.json "$INFER_ARGS" || true
 
         # Excludes for clang-tidy are handled in python script
         debug_print "Running run-clang-tidy-19 $CLANG_TIDY_ARGS -p $(pwd) $files_to_check >>clang_tidy.txt 2>&1"
@@ -101,7 +99,7 @@ else
         eval cppcheck "$files_to_check" "$CPPCHECK_ARGS" --output-file=cppcheck.txt || true
 
         debug_print "Running infer run --no-progress-bar $INFER_ARGS..."
-        eval infer run --no-progress-bar $INFER_ARGS || true
+        eval infer run --no-progress-bar "$INFER_ARGS" || true
 
         debug_print "Running run-clang-tidy-19 $CLANG_TIDY_ARGS $files_to_check >>clang_tidy.txt 2>&1"
         eval run-clang-tidy-19 "$CLANG_TIDY_ARGS" "$files_to_check" >clang_tidy.txt 2>&1 || true
