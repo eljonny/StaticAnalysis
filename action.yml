@@ -1,5 +1,5 @@
-name: "Static analysis for C++(Clang-19)/Python project"
-description: "Static analysis with cppcheck & clang-tidy for C++, pylint for Python. Posts results to PRs or console."
+name: "Static Analysis for C++ and Python projects"
+description: "Static analysis with cppcheck, clang-tidy, fbinfer, and flawfinder for C++, pylint for Python. Posts results to PRs or console."
 
 inputs:
   github_token:
@@ -35,7 +35,15 @@ inputs:
     description: 'cppcheck (space separated) arguments that will be used'
     default: --enable=all --suppress=missingIncludeSystem --inline-suppr --inconclusive
   clang_tidy_args:
-    description: 'clang-tidy arguments that will be used (example: -checks="*,fuchsia-*,google-*,zircon-*"'
+    description: 'clang-tidy arguments that will be used (example: -checks="*,fuchsia-*,google-*,zircon-*")'
+  fbinfer_args:
+    description: 'Arguments that will be passed to infer'
+  flawfinder_args:
+    description: 'Flawfinder arguments that will be used'
+    default: --minlevel=0 --context --dataonly --quiet --columns --error-level=0
+  flawfinder_targets:
+    description: 'Directories (space separated) containing C/C++ header and/or files to be checked'
+    default: ${{github.workspace}}/src ${{github.workspace}}/include
   report_pr_changes_only:
     description: 'Only post the issues found within the changes introduced in this Pull Request'
     default: false

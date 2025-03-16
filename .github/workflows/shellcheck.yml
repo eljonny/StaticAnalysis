@@ -5,6 +5,8 @@ on:
     branches:
       - main
   pull_request:
+    branches:
+      - main
 
 jobs:
   shellcheck:
@@ -13,6 +15,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Run ShellCheck
-        uses: ludeeus/action-shellcheck@main
+        uses: ludeeus/action-shellcheck@master
         with:
           ignore_names: llvm.sh # External file
