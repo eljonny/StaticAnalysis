@@ -9,19 +9,27 @@ print_to_console=${print_to_console:-false}
 use_extra_directory=${use_extra_directory:-false}
 common_ancestor=${common_ancestor:-""}
 
-CLANG_TIDY_ARGS="${INPUT_CLANG_TIDY_ARGS//$'\n'/}"
+FLAWFINDER_ARGS="${INPUT_FLAWFINDER_ARGS//$'\n'/}"
+FLAWFINDER_TGTS="${INPUT_FLAWFINDER_TARGETS//$'\n'/}"
 CPPCHECK_ARGS="${INPUT_CPPCHECK_ARGS//$'\n'/}"
+INFER_ARGS="${INPUT_FBINFER_ARGS//$'\n'/}"
+CLANG_TIDY_ARGS="${INPUT_CLANG_TIDY_ARGS//$'\n'/}"
+
+WS_BASE="$GITHUB_WORKSPACE/build"
+WS_INFER="$GITHUB_WORKSPACE/build/infer-out"
 
 cd build
 
 if [ "$INPUT_REPORT_PR_CHANGES_ONLY" = true ]; then
   if [ -z "$preselected_files" ]; then
         # Create empty files
+        touch flawfinder.txt
         touch cppcheck.txt
+        touch infer.json
         touch clang_tidy.txt
 
         cd /
-        python3 -m src.static_analysis_cpp -cc "${GITHUB_WORKSPACE}/build/cppcheck.txt" -ct "${GITHUB_WORKSPACE}/build/clang_tidy.txt" -o "$print_to_console" -fk "$use_extra_directory" --common "$common_ancestor" --head "origin/$GITHUB_HEAD_REF"
+        python3 -m src.static_analysis_cpp -ff "$WS_BASE/flawfinder.txt" -cc "$WS_BASE/cppcheck.txt" -fi "$WS_BASE/infer.json" -ct "$WS_BASE/clang_tidy.txt" -o "$print_to_console" -fk "$use_extra_directory" --common "$common_ancestor" --head "origin/$GITHUB_HEAD_REF"
         exit 0
    fi
 fi
@@ -41,15 +49,30 @@ else
     debug_print "Running: files_to_check=python3 /src/get_files_to_check.py -exclude=\"$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR\" -dir=\"$GITHUB_WORKSPACE\" -preselected=\"$preselected_files\" -lang=\"c++\")"
 fi
 
+debug_print "FLAWFINDER_ARGS = $FLAWFINDER_ARGS"
+debug_print "FLAWFINDER_TGTS = $FLAWFINDER_TGTS"
 debug_print "Files to check = $files_to_check"
 debug_print "CPPCHECK_ARGS = $CPPCHECK_ARGS"
 debug_print "CLANG_TIDY_ARGS = $CLANG_TIDY_ARGS"
+debug_print "INFER_ARGS = $INFER_ARGS"
+debug_print "WS_BASE = $WS_BASE"
+debug_print "WS_INFER = $WS_INFER"
 
 num_proc=$(nproc)
 
 if [ -z "$files_to_check" ]; then
     echo "No files to check"
+
 else
+    for ffdir in $FLAWFINDER_TGTS; do
+        dir_name=$(echo "$ffdir" | tr '/' '_')
+
+        debug_print "Running flawfinder $FLAWFINDER_ARGS for files in /$GITHUB_WORKSPACE/$ffdir..."
+        eval flawfinder $FLAWFINDER_ARGS /$GITHUB_WORKSPACE/$ffdir >>flawfinder_$dir_name.txt 2>&1 || true
+    done
+
+    cat flawfinder_*.txt > flawfinder.txt
+
     if [ "$INPUT_USE_CMAKE" = true ]; then
         for file in $files_to_check; do
             exclude_arg=""
@@ -66,20 +89,25 @@ else
 
         cat cppcheck_*.txt > cppcheck.txt
 
+        debug_print "Running infer run --no-progress-bar --compilation-database compile_commands.json $INFER_ARGS..."
+        eval infer run --no-progress-bar --compilation-database compile_commands.json $INFER_ARGS || true
+
         # Excludes for clang-tidy are handled in python script
-        debug_print "Running run-clang-tidy-20 $CLANG_TIDY_ARGS -p $(pwd) $files_to_check >>clang_tidy.txt 2>&1"
-        eval run-clang-tidy-20 "$CLANG_TIDY_ARGS" -p "$(pwd)" "$files_to_check" >clang_tidy.txt 2>&1 || true
+        debug_print "Running run-clang-tidy-19 $CLANG_TIDY_ARGS -p $(pwd) $files_to_check >>clang_tidy.txt 2>&1"
+        eval run-clang-tidy-19 "$CLANG_TIDY_ARGS" -p "$(pwd)" "$files_to_check" >clang_tidy.txt 2>&1 || true
 
     else
-        # Excludes for clang-tidy are handled in python script
-        debug_print "Running cppcheck -j $num_proc $files_to_check $CPPCHECK_ARGS --output-file=cppcheck.txt ..."
-        eval cppcheck -j "$num_proc" "$files_to_check" "$CPPCHECK_ARGS" --output-file=cppcheck.txt || true
+        debug_print "Running cppcheck $files_to_check $CPPCHECK_ARGS --output-file=cppcheck.txt ..."
+        eval cppcheck "$files_to_check" "$CPPCHECK_ARGS" --output-file=cppcheck.txt || true
 
-        debug_print "Running run-clang-tidy-20 $CLANG_TIDY_ARGS $files_to_check >>clang_tidy.txt 2>&1"
-        eval run-clang-tidy-20 "$CLANG_TIDY_ARGS" "$files_to_check" >clang_tidy.txt 2>&1 || true
+        debug_print "Running infer run --no-progress-bar $INFER_ARGS..."
+        eval infer run --no-progress-bar $INFER_ARGS || true
+
+        debug_print "Running run-clang-tidy-19 $CLANG_TIDY_ARGS $files_to_check >>clang_tidy.txt 2>&1"
+        eval run-clang-tidy-19 "$CLANG_TIDY_ARGS" "$files_to_check" >clang_tidy.txt 2>&1 || true
     fi
 
     cd /
 
-    python3 -m src.static_analysis_cpp -cc "${GITHUB_WORKSPACE}/build/cppcheck.txt" -ct "${GITHUB_WORKSPACE}/build/clang_tidy.txt" -o "$print_to_console" -fk "$use_extra_directory" --common "$common_ancestor" --head "origin/$GITHUB_HEAD_REF"
+    python3 -m src.static_analysis_cpp -ff "$WS_BASE/flawfinder.txt" -cc "$WS_BASE/cppcheck.txt" -fi "$WS_INFER/report.json" -ct "$WS_BASE/clang_tidy.txt" -o "$print_to_console" -fk "$use_extra_directory" --common "$common_ancestor" --head "origin/$GITHUB_HEAD_REF"
 fi

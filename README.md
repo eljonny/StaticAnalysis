@@ -106,6 +106,15 @@ jobs:
 
         # (Optional) cppcheck args
         cppcheck_args: --enable=all --suppress=missingIncludeSystem
+
+        # (Optional) infer args, required if not using CMake
+        fbinfer_args: -- make -j 4
+
+        # (Optional) flawfinder args
+        flawfinder_args: --minlevel=1 --context --dataonly --quiet --columns --error-level=2
+
+        # (Optional) flawfinder targets, if you use something other than src and include for implementations and headers, respectively, or if there are additional directories with implementation code and/or headers
+        flawfinder_targets: src include otherSrc otherInclude
 ```
 
 ## Inputs
@@ -120,12 +129,12 @@ jobs:
 | `init_script`           | Optional shell script that will be run before configuring project (i.e. running CMake command). This should be used, when the project requires some environmental set-up beforehand. Script will be run with 2 arguments: `root_dir`(root directory of user's code) and `build_dir`(build directory created for running SA). Note. `apt_pckgs` will run before this script, just in case you need some packages installed. Also this script will be run in the root of the project (`root_dir`) | `<empty>` |
 | `cppcheck_args`         | Cppcheck (space separated) arguments that will be used | `--enable=all --suppress=missingIncludeSystem --inline-suppr --inconclusive` |
 | `clang_tidy_args`       | clang-tidy arguments that will be used (example: `-checks='*,fuchsia-*,google-*,zircon-*'`) | `<empty>` |
-| `fbinfer_args`          | FB Infer arguments that will be used, the easiest way to use it is with a JSON compilation database | `run --compilation-database path/to/compile_commands.json` |
+| `fbinfer_args`          | FB Infer arguments that will be used, if you don't use CMake, use this to specify the build system (example: `-- make -j 4`) | `<empty>` |
 | `flawfinder_args`       | flawfinder arguments that will be used (example: `--minlevel=0 --html --html-title="ProjectX Flawfinder Report" --columns`) | `--minlevel=0 --context --dataonly --quiet --columns --error-level=0` |
-| `flawfinder_targets`    | Directories with source and/or header files that will be analyzed with flawfinder | `${{github.workspace}}/src ${{github.workspace}}/include` |
+| `flawfinder_targets`    | Directories with implementation and/or header files that will be analyzed with flawfinder | `src include` |
 | `report_pr_changes_only`| Only post the issues found within the changes introduced in this Pull Request. This means that only the issues found within the changed lines will po posted. Any other issues caused by these changes in the repository, won't be reported, so in general you should run static analysis on entire code base  | `false` |
 | `use_cmake`             | Determines wether CMake should be used to generate compile_commands.json file | `true` |
-| `cmake_args`            | Additional CMake arguments | `-B ${{github.workspace}}/build -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -S ${{github.workspace}}` |
+| `cmake_args`            | Additional CMake arguments | `<empty>` |
 | `force_console_print`   | Output the action result to console, instead of creating the comment | `false` |
 
 **NOTE: `apt_pckgs` will run before `init_script`, just in case you need some packages installed before running the script**
