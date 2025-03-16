@@ -3,7 +3,7 @@ name: Linter
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
 
 jobs:
@@ -14,7 +14,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: CodeQuality
-        uses: JacobDomagala/StaticAnalysis@master
+        uses: JacobDomagala/StaticAnalysis@main
         with:
           language: "Python"
           pylint_args: "--rcfile=.pylintrc --recursive=true"

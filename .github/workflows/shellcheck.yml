@@ -3,7 +3,7 @@ name: "Shellcheck"
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
 
 jobs:
@@ -13,6 +13,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Run ShellCheck
-        uses: ludeeus/action-shellcheck@master
+        uses: ludeeus/action-shellcheck@main
         with:
           ignore_names: llvm.sh # External file

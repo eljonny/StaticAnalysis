@@ -1,6 +1,6 @@
-[![Linter](https://github.com/JacobDomagala/StaticAnalysis/actions/workflows/linter.yml/badge.svg?branch=master)](https://github.com/JacobDomagala/StaticAnalysis/actions/workflows/linter.yml?query=branch%3Amaster)
-[![Test Action](https://github.com/JacobDomagala/StaticAnalysis/actions/workflows/test_action.yml/badge.svg?branch=master)](https://github.com/JacobDomagala/StaticAnalysis/actions/workflows/test_action.yml?query=branch%3Amaster)
-[![Unit Tests](https://github.com/JacobDomagala/StaticAnalysis/actions/workflows/unit_tests.yml/badge.svg?branch=master)](https://github.com/JacobDomagala/StaticAnalysis/actions/workflows/unit_tests.yml?query=branch%3Amaster)
+[![Linter](https://github.com/JacobDomagala/StaticAnalysis/actions/workflows/linter.yml/badge.svg?branch=main)](https://github.com/JacobDomagala/StaticAnalysis/actions/workflows/linter.yml?query=branch%3Amain)
+[![Test Action](https://github.com/JacobDomagala/StaticAnalysis/actions/workflows/test_action.yml/badge.svg?branch=main)](https://github.com/JacobDomagala/StaticAnalysis/actions/workflows/test_action.yml?query=branch%3Amain)
+[![Unit Tests](https://github.com/JacobDomagala/StaticAnalysis/actions/workflows/unit_tests.yml/badge.svg?branch=main)](https://github.com/JacobDomagala/StaticAnalysis/actions/workflows/unit_tests.yml?query=branch%3Amain)
 
 # Static Analysis
 
@@ -51,7 +51,7 @@ on:
   push:
     branches:
       - develop
-      - master
+      - main
       - main
 
   # 'pull_request_target' allows this Action to also run on forked repositories
@@ -82,7 +82,7 @@ jobs:
         apt install -y libvulkan1 mesa-vulkan-drivers vulkan-utils" > init_script.sh
 
     - name: Run static analysis
-      uses: JacobDomagala/StaticAnalysis@master
+      uses: JacobDomagala/StaticAnalysis@main
       with:
         language: c++
 
@@ -136,7 +136,7 @@ name: Static analysis
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
 
 jobs:
@@ -147,7 +147,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: CodeQuality
-        uses: JacobDomagala/StaticAnalysis@master
+        uses: JacobDomagala/StaticAnalysis@main
         with:
           language: "Python"
           pylint_args: "--rcfile=.pylintrc --recursive=true"
